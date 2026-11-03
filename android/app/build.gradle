@@ -5,6 +5,8 @@ plugins {
 android {
     namespace 'dev.arena.dota2port'
     compileSdk 34
+    // Must match the SDK package installed by build-apk.yml.
+    ndkVersion '26.3.11579264'
 
     defaultConfig {
         applicationId 'dev.arena.dota2port'

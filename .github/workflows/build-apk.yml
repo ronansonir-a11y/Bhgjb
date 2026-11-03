@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -80,11 +80,21 @@ jobs:
       - name: Assemble debug APK
         working-directory: android
         run: |
+          set -o pipefail
           if [ "${{ inputs.with_ndk }}" != "false" ]; then
-            ./gradlew assembleDebug -PwithNdk --stacktrace --no-daemon
+            ./gradlew assembleDebug -PwithNdk --stacktrace --no-daemon 2>&1 | tee build.log
           else
-            ./gradlew assembleDebug --stacktrace --no-daemon
+            ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee build.log
           fi
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload Gradle log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: android/build.log
+          if-no-files-found: warn
 
       - name: Collect deliverable
         run: |
