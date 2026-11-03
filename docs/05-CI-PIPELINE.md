@@ -99,8 +99,9 @@ python tools/lift/lift64_cpu.py dota2.exe dota2.exe.funcs.txt dota2.lift.c 0x140
 
 ```yaml
 - uses: actions/setup-java@v4          # Temurin 17
-- uses: android-actions/setup-android@v3
-- run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.3.11579264"
+- run: $ANDROID_HOME/cmdline-tools/*/bin/sdkmanager   # SDK уже есть в ubuntu-latest
+        --install "platforms;android-34" "build-tools;34.0.0" \
+                  "ndk;26.3.11579264" "cmake;3.22.1"
 - uses: gradle/actions/setup-gradle@v4  # Gradle 8.9
 - run: cd android && gradle wrapper --gradle-version 8.9   # wrapper.jar НЕ коммитится
 - run: python runtime/fetch.py …        # опционально, continue-on-error
@@ -117,6 +118,7 @@ python tools/lift/lift64_cpu.py dota2.exe dota2.exe.funcs.txt dota2.lift.c 0x140
 | `abiFilters 'arm64-v8a'` | только ARM64; x86_64-код исполняет Box64/FEX, а не CPU |
 | Чистый Java, без AndroidX/Kotlin | минимум зависимостей → сборка предсказуема в CI |
 | `gradle wrapper` генерируется в джобе | не храним бинарный `gradle-wrapper.jar` в Git |
+| SDK берётся из образа раннера | `android-actions/setup-android@v3` упал на первом прогоне CI; сторонняя обвязка не нужна |
 | `-PwithNdk` (флаг) | собирает `libdota2bridge.so` через CMake/NDK; если NDK недоступен — APK собирается без JNI-библиотеки, Java это обрабатывает |
 | Debug-подпись (`apksigner` из AGP) | sideload; release-ключ в CI не храним |
 | `runtime/fetch.py` — **опциональный** шаг | скачивает 157 МБ Winlator APK и 13 МБ Goldberg, распаковывает `rootfs.tzst`, `container_pattern.tzst`, `box64-*.tzst`, `turnip-*.tzst`, `vortek-*.tzst` и `steam_api64.dll` в `assets/runtime/`. Ошибка сети не роняет сборку APK |

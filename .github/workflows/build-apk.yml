@@ -37,14 +37,23 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
+      # ubuntu-latest images already ship the Android SDK. Avoid a third-party
+      # setup action (it failed at startup on the first CI run).
       - name: Install Android SDK / NDK / CMake
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager --install \
+          SDK="${ANDROID_HOME}"
+          SM="$(ls "$SDK"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | sort -V | tail -1)"
+          if [ -z "$SM" ]; then SM="$(command -v sdkmanager)"; fi
+          echo "sdkmanager: $SM"
+          yes | "$SM" --licenses >/dev/null 2>&1 || true
+          "$SM" --install \
             "platforms;android-34" "build-tools;34.0.0" "platform-tools" \
-            "ndk;26.3.11579264" "cmake;3.22.1" 2>&1 | tail -6
+            "ndk;26.3.11579264" "cmake;3.22.1" 2>&1 | tail -8
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -71,7 +80,7 @@ jobs:
       - name: Assemble debug APK
         working-directory: android
         run: |
-          if [ "${{ inputs.with_ndk }}" = "true" ]; then
+          if [ "${{ inputs.with_ndk }}" != "false" ]; then
             ./gradlew assembleDebug -PwithNdk --stacktrace --no-daemon
           else
             ./gradlew assembleDebug --stacktrace --no-daemon
