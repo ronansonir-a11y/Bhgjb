@@ -10,6 +10,10 @@ on:
         description: 'Optional signed URL of dota2-win64-bins.zip'
         required: false
         default: ''
+  push:
+    paths:
+      - '.github/workflows/path-a-probe.yml'
+      - 'assets/incoming/**'
 
 permissions:
   contents: read
@@ -59,18 +63,21 @@ jobs:
             fi
           fi
           if [ -z "$ZIP" ] || [ ! -s "$ZIP" ]; then
-            echo "::error::No archive available. See docs/04-FILE-MANIFEST.md."
-            exit 1
+            echo "::notice::No archive supplied — probe skipped. See docs/04-FILE-MANIFEST.md."
+            echo "zip=" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "zip=$(realpath "$ZIP")" >> "$GITHUB_OUTPUT"
 
-      - name: Clone pinned pcrecomp
+      - if: steps.locate.outputs.zip != ''
+        name: Clone pinned pcrecomp
         run: |
           git clone --quiet https://github.com/sp00nznet/pcrecomp.git /tmp/pcrecomp
           git -C /tmp/pcrecomp checkout --quiet "$PCRECOMP_SHA"
           echo "pcrecomp @ $(git -C /tmp/pcrecomp rev-parse --short HEAD)"
 
-      - name: Extract the two probe modules
+      - if: steps.locate.outputs.zip != ''
+        name: Extract the two probe modules
         run: |
           set -euo pipefail
           mkdir -p /tmp/probe/out
@@ -79,11 +86,13 @@ jobs:
             -d /tmp/probe >/dev/null
           ls -lh /tmp/probe
 
-      - name: disasm64 selftest (toolchain sanity)
+      - if: steps.locate.outputs.zip != ''
+        name: disasm64 selftest (toolchain sanity)
         working-directory: /tmp/pcrecomp
         run: python tools/disasm/disasm64.py --selftest 2>&1 | tee /tmp/probe/out/disasm64-selftest.txt || true
 
-      - name: pe_analyze + disasm64 on dota2.exe and engine2.dll
+      - if: steps.locate.outputs.zip != ''
+        name: pe_analyze + disasm64 on dota2.exe and engine2.dll
         working-directory: /tmp/pcrecomp
         run: |
           set -uo pipefail
@@ -102,7 +111,8 @@ jobs:
             fi
           done
 
-      - name: Experimental lift64 (errors are the result, not a failure)
+      - if: steps.locate.outputs.zip != ''
+        name: Experimental lift64 (errors are the result, not a failure)
         working-directory: /tmp/pcrecomp
         run: |
           set -uo pipefail
@@ -119,7 +129,8 @@ jobs:
           echo "See docs/02-PATH-A-STATIC-RECOMPILATION.md for the blocker list." \
             >> /tmp/probe/out/README.txt
 
-      - name: Publish probe
+      - if: steps.locate.outputs.zip != ''
+        name: Publish probe
         uses: actions/upload-artifact@v4
         with:
           name: path-a-probe

@@ -17,6 +17,7 @@ on:
   push:
     paths:
       - 'assets/incoming/**'
+      - '.github/workflows/pe-analysis.yml'
 
 permissions:
   contents: read
@@ -66,24 +67,29 @@ jobs:
             fi
           fi
           if [ -z "$ZIP" ] || [ ! -s "$ZIP" ]; then
-            echo "::error::No archive. Pass archive_url, set repository variable DOTA2_BINS_URL, or place a ZIP in assets/incoming/."
-            exit 1
+            echo "::notice::No archive supplied — analysis skipped. Pass archive_url, set DOTA2_BINS_URL, or push a ZIP to assets/incoming/."
+            echo "zip=" >> "$GITHUB_OUTPUT"
+            echo "size=0" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "zip=$(realpath "$ZIP")" >> "$GITHUB_OUTPUT"
           echo "size=$(stat -c%s "$ZIP")" >> "$GITHUB_OUTPUT"
 
-      - name: Install llvm-readobj
+      - if: steps.locate.outputs.zip != ''
+        name: Install llvm-readobj
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq llvm >/dev/null
 
-      - name: Validate archive (structure, PE32+/AMD64, sha256, zip-slip)
+      - if: steps.locate.outputs.zip != ''
+        name: Validate archive (structure, PE32+/AMD64, sha256, zip-slip)
         run: |
           python tools/validate_archive.py \
             --zip "${{ steps.locate.outputs.zip }}" \
             --out report --strict
 
-      - name: PE32+ import/export/SEH analysis
+      - if: steps.locate.outputs.zip != ''
+        name: PE32+ import/export/SEH analysis
         env:
           DEEP: ${{ inputs.deep }}
         run: |
@@ -94,17 +100,20 @@ jobs:
             --manifest data/depot-373303-2026-11-03.tsv \
             --out report $EXTRA
 
-      - name: Generate Win32/Vulkan glue inventory
+      - if: steps.locate.outputs.zip != ''
+        name: Generate Win32/Vulkan glue inventory
         run: |
           python tools/gen_glue_inventory.py \
             --analysis report/pe-analysis.json --out report
 
-      - name: Independent llvm-readobj cross-check
+      - if: steps.locate.outputs.zip != ''
+        name: Independent llvm-readobj cross-check
         run: |
           chmod +x tools/llvm_readobj_dump.sh
           tools/llvm_readobj_dump.sh "${{ steps.locate.outputs.zip }}" report/llvm-readobj
 
-      - name: Publish report
+      - if: steps.locate.outputs.zip != ''
+        name: Publish report
         uses: actions/upload-artifact@v4
         with:
           name: dota2-pe-report
@@ -112,7 +121,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Summary
+      - if: steps.locate.outputs.zip != ''
+        name: Summary
         run: |
           echo "### PE analysis complete" >> "$GITHUB_STEP_SUMMARY"
           echo "- archive bytes: ${{ steps.locate.outputs.size }}" >> "$GITHUB_STEP_SUMMARY"
