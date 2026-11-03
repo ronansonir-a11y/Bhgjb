@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""
+gen_glue_inventory.py — turn pe-analysis.json into the concrete Path-A work list.
+
+Produces:
+  report/glue-inventory.md    per-DLL API census + estimated glue effort
+  report/api-surface.json     machine-readable surface
+  report/glue-stubs.h         C++ dispatch table skeleton (names only, no game code)
+
+This is intentionally NOT a recompiler. It answers the question "how large is
+the Win32/Vulkan HLE layer we would have to write?" with real numbers from the
+uploaded binaries.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from collections import defaultdict
+from pathlib import Path
+
+
+def c_identifier(name: str) -> str:
+    return re.sub(r"[^0-9A-Za-z_]", "_", name)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--analysis", type=Path, default=Path("report/pe-analysis.json"))
+    ap.add_argument("--out", type=Path, default=Path("report"))
+    args = ap.parse_args()
+    data = json.loads(args.analysis.read_text(encoding="utf-8"))
+    recs = data["modules"]
+
+    per_dll = defaultdict(lambda: {"functions": set(), "importers": set(), "category": None})
+    for r in recs:
+        who = Path(r["path"]).name
+        for imp in r.get("imports", []):
+            e = per_dll[imp["dll"]]
+            e["category"] = imp["category"]
+            e["importers"].add(who)
+            for f in imp["functions"]:
+                if f["name"]:
+                    e["functions"].add(f["name"])
+                elif f["ordinal"] is not None:
+                    e["functions"].add(f"ordinal_{f['ordinal']}")
+
+    total = sum(len(e["functions"]) for e in per_dll.values())
+    win32 = {d: e for d, e in per_dll.items() if e["category"] == "win32-core"}
+    win32_total = sum(len(e["functions"]) for e in win32.values())
+    vulkan = {d: e for d, e in per_dll.items() if e["category"] == "graphics-vulkan"}
+    internal = {d: e for d, e in per_dll.items() if e["category"] == "source2-internal"}
+
+    surface = {
+        "total_unique_imported_names": total,
+        "dll_count": len(per_dll),
+        "win32_unique_names": win32_total,
+        "vulkan_unique_names": sum(len(e["functions"]) for e in vulkan.values()),
+        "source2_internal_dlls": sorted(internal),
+        "dlls": {d: {"category": e["category"],
+                     "unique_functions": len(e["functions"]),
+                     "function_names": sorted(e["functions"]),
+                     "imported_by": sorted(e["importers"])}
+                 for d, e in sorted(per_dll.items())},
+    }
+    args.out.mkdir(parents=True, exist_ok=True)
+    (args.out / "api-surface.json").write_text(
+        json.dumps(surface, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    L = ["# Glue / HLE inventory (Path A)", "",
+         f"* **{total}** unique imported API names across **{len(per_dll)}** DLLs.",
+         f"* Win32/CRT (`kernel32`, `ntdll`, `ucrtbase`, `msvcp140`, …): **{win32_total}** unique names.",
+         f"* Internal Source 2 DLLs that must be recompiled *together* with `client.dll` / "
+         f"`server.dll`: **{len(internal)}**.",
+         f"* Vulkan loader DLLs: **{len(vulkan)}**.",
+         "",
+         "> These numbers are the answer to \"can I write a glue layer?\". "
+         "A production Win32 HLE is tens of thousands of lines (compare Wine's "
+         "`dlls/kernel32` + `ntdll`), and every one of these functions must keep the "
+         "**Microsoft x64 ABI** while the lifted code runs with an **AAPCS64** host ABI.",
+         "",
+         "## Per-DLL census (top 40 by unique API count)", "",
+         "| DLL | Category | Unique APIs | Imported by (count) |", "|---|---|---:|---:|"]
+    for d, e in sorted(per_dll.items(), key=lambda kv: -len(kv[1]["functions"]))[:40]:
+        L.append(f"| `{d}` | `{e['category']}` | {len(e['functions'])} | {len(e['importers'])} |")
+    L += ["", "## Vulkan surface", ""]
+    if vulkan:
+        for d, e in vulkan.items():
+            L.append(f"### `{d}` ({len(e['functions'])} entry points)")
+            L.append("")
+            L.append("```")
+            L.append("\n".join(sorted(e["functions"])[:120]))
+            L.append("```")
+    else:
+        L.append("No `vulkan-1.dll` static import found. The Vulkan renderer resolves "
+                 "entry points dynamically (`vkGetInstanceProcAddr`) or via Valve's own "
+                 "loader shim — a static import census cannot enumerate them. "
+                 "Expect a Vk-on-Vk thunk layer (FEX ThunkLibs / Box64 wrapped "
+                 "libvulkan / Vortek) rather than plain symbol forwarding.")
+    L += ["", "## Exported Source 2 interfaces (late-bound cross-DLL calls)", "",
+          "| Module | Exported names |", "|---|---:|"]
+    for r in sorted(recs, key=lambda r: -r.get("export_count", 0))[:20]:
+        if r.get("export_count"):
+            L.append(f"| `{Path(r['path']).name}` | {r['export_count']} |")
+    L += ["", "---", "",
+          "Generated by `tools/gen_glue_inventory.py` from `report/pe-analysis.json`. "
+          "No game code is emitted."]
+    (args.out / "glue-inventory.md").write_text("\n".join(L) + "\n", encoding="utf-8")
+
+    hdr = ["// Generated by tools/gen_glue_inventory.py — names only, NO game code.",
+           "// Dispatch-table skeleton for a hypothetical Win32/Vulkan HLE layer.",
+           "// Implementations are intentionally absent: see docs/02-PATH-A-STATIC-RECOMPILATION.md.",
+           "#pragma once", "#include <cstddef>", "", "namespace dota2_glue {", "",
+           "struct ApiEntry { const char* dll; const char* name; void* impl; };", "",
+           "inline constexpr const char* kRequiredApis[] = {"]
+    for d, e in sorted(per_dll.items()):
+        for fn in sorted(e["functions"]):
+            hdr.append(f'    "{d}!{fn}",')
+    hdr += ["};", "", f"inline constexpr std::size_t kRequiredApiCount = {total};", "",
+            "// TODO(glue): populate an ApiEntry table of kRequiredApiCount entries;",
+            "// every entry must marshal MS x64 -> AAPCS64, TEB/PEB, SEH unwind and",
+            "// guest pointers (which are 64-bit *guest* addresses, not host pointers).",
+            "", "}  // namespace dota2_glue", ""]
+    (args.out / "glue-stubs.h").write_text("\n".join(hdr), encoding="utf-8")
+
+    print(f"[glue] {total} unique APIs / {len(per_dll)} DLLs "
+          f"({win32_total} Win32+CRT) -> {args.out}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,127 @@
+name: path-a-probe
+
+# EXPERIMENTAL. Runs pcrecomp's IDA-free x86-64 function recovery on the two
+# smallest Source 2 PE32+ modules. It reports what WOULD be needed for Path A;
+# it deliberately does NOT claim to produce a working ARM64 port.
+on:
+  workflow_dispatch:
+    inputs:
+      archive_url:
+        description: 'Optional signed URL of dota2-win64-bins.zip'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+env:
+  PCRECOMP_SHA: ef3f0da6e08a8eb7a3f869273f3df071ca8d7373
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/requirements.txt
+
+      - name: Locate archive
+        id: locate
+        env:
+          ARCHIVE_URL: ${{ inputs.archive_url }}
+          DOTA2_BINS_URL: ${{ vars.DOTA2_BINS_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets/incoming
+          ZIP=""
+          if [ -n "${ARCHIVE_URL:-}" ]; then
+            curl -fL --retry 2 -o assets/incoming/input.zip "$ARCHIVE_URL"
+            ZIP="assets/incoming/input.zip"
+          elif ls assets/incoming/*.zip >/dev/null 2>&1; then
+            ZIP="$(ls -S assets/incoming/*.zip | head -1)"
+          elif [ -n "${DOTA2_BINS_URL:-}" ]; then
+            if [[ "$DOTA2_BINS_URL" == *"/releases/download/"* ]]; then
+              gh release download dota2-bins -p dota2-win64-bins.zip \
+                -D assets/incoming --clobber
+              ZIP="assets/incoming/dota2-win64-bins.zip"
+            else
+              curl -fL --retry 2 -o assets/incoming/input.zip "$DOTA2_BINS_URL"
+              ZIP="assets/incoming/input.zip"
+            fi
+          fi
+          if [ -z "$ZIP" ] || [ ! -s "$ZIP" ]; then
+            echo "::error::No archive available. See docs/04-FILE-MANIFEST.md."
+            exit 1
+          fi
+          echo "zip=$(realpath "$ZIP")" >> "$GITHUB_OUTPUT"
+
+      - name: Clone pinned pcrecomp
+        run: |
+          git clone --quiet https://github.com/sp00nznet/pcrecomp.git /tmp/pcrecomp
+          git -C /tmp/pcrecomp checkout --quiet "$PCRECOMP_SHA"
+          echo "pcrecomp @ $(git -C /tmp/pcrecomp rev-parse --short HEAD)"
+
+      - name: Extract the two probe modules
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/probe/out
+          unzip -o -j "${{ steps.locate.outputs.zip }}" \
+            "game/bin/win64/dota2.exe" "game/bin/win64/engine2.dll" \
+            -d /tmp/probe >/dev/null
+          ls -lh /tmp/probe
+
+      - name: disasm64 selftest (toolchain sanity)
+        working-directory: /tmp/pcrecomp
+        run: python tools/disasm/disasm64.py --selftest 2>&1 | tee /tmp/probe/out/disasm64-selftest.txt || true
+
+      - name: pe_analyze + disasm64 on dota2.exe and engine2.dll
+        working-directory: /tmp/pcrecomp
+        run: |
+          set -uo pipefail
+          for f in dota2.exe engine2.dll; do
+            echo "=== $f ==="
+            python tools/pe/pe_analyze.py "/tmp/probe/$f" \
+                --json "/tmp/probe/out/$f.pe.json" \
+                > "/tmp/probe/out/$f.pe.log" 2>&1 || true
+            python tools/disasm/disasm64.py "/tmp/probe/$f" \
+                -o "/tmp/probe/out/$f.funcs.json" \
+                --funcs-txt "/tmp/probe/out/$f.funcs.txt" \
+                > "/tmp/probe/out/$f.disasm.log" 2>&1 || true
+            if [ -f "/tmp/probe/out/$f.funcs.txt" ]; then
+              echo "functions: $(wc -l < "/tmp/probe/out/$f.funcs.txt")" \
+                | tee "/tmp/probe/out/$f.count.txt"
+            fi
+          done
+
+      - name: Experimental lift64 (errors are the result, not a failure)
+        working-directory: /tmp/pcrecomp
+        run: |
+          set -uo pipefail
+          python tools/lift/lift64_cpu.py /tmp/probe/dota2.exe \
+              /tmp/probe/out/dota2.exe.funcs.txt \
+              /tmp/probe/out/dota2.lift.c 0x140001000 \
+              > /tmp/probe/out/dota2.lift.log 2>&1 || true
+          if [ -f /tmp/probe/out/dota2.lift.c ]; then
+            echo "generated C lines: $(wc -l < /tmp/probe/out/dota2.lift.c)" \
+              > /tmp/probe/out/dota2.lift.count.txt
+          fi
+          echo "NOTE: no attempt is made to lift client.dll (102.55 MiB)." \
+            > /tmp/probe/out/README.txt
+          echo "See docs/02-PATH-A-STATIC-RECOMPILATION.md for the blocker list." \
+            >> /tmp/probe/out/README.txt
+
+      - name: Publish probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: path-a-probe
+          path: /tmp/probe/out/
+          if-no-files-found: warn

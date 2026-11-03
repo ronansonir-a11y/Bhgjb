@@ -1,0 +1,5 @@
+// Top-level build file. The Gradle wrapper is generated inside CI
+// (gradle/actions/setup-gradle + `gradle wrapper`), so no binary jar is committed.
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}

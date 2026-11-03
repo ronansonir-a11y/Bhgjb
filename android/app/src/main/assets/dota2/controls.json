@@ -1,0 +1,512 @@
+{
+  "profile": "dota2-landscape-v1",
+  "appId": 570,
+  "description": "Right-click to move, Q/W/E/D/F/R abilities, 1-6 items, camera pad",
+  "socket": "dota2-input",
+  "controls": [
+    {
+      "id": "move",
+      "label": "MOVE / ПКМ",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.315,
+      "y": 0.69,
+      "scale": 1.35,
+      "binding": "MOUSE_RIGHT_BUTTON",
+      "bindings": [
+        "MOUSE_RIGHT_BUTTON",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": true,
+      "toggle": false
+    },
+    {
+      "id": "trackpad",
+      "label": "КУРСОР",
+      "type": "trackpad",
+      "shape": "RECT",
+      "x": 0.165,
+      "y": 0.46,
+      "scale": 1.0,
+      "binding": "MOUSE_MOVE_UP",
+      "bindings": [
+        "MOUSE_MOVE_UP",
+        "MOUSE_MOVE_RIGHT",
+        "MOUSE_MOVE_DOWN",
+        "MOUSE_MOVE_LEFT"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "cam",
+      "label": "КАМЕРА",
+      "type": "stick",
+      "shape": "CIRCLE",
+      "x": 0.075,
+      "y": 0.76,
+      "scale": 1.0,
+      "binding": "KEY_UP",
+      "bindings": [
+        "KEY_UP",
+        "KEY_RIGHT",
+        "KEY_DOWN",
+        "KEY_LEFT"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "cam_grip",
+      "label": "ЗАХВАТ КАМЕРЫ",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.245,
+      "y": 0.88,
+      "scale": 0.7,
+      "binding": "MOUSE_MIDDLE_BUTTON",
+      "bindings": [
+        "MOUSE_MIDDLE_BUTTON",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "zoom_in",
+      "label": "ZOOM +",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.155,
+      "y": 0.17,
+      "scale": 0.65,
+      "binding": "MOUSE_SCROLL_UP",
+      "bindings": [
+        "MOUSE_SCROLL_UP",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "zoom_out",
+      "label": "ZOOM -",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.155,
+      "y": 0.29,
+      "scale": 0.65,
+      "binding": "MOUSE_SCROLL_DOWN",
+      "bindings": [
+        "MOUSE_SCROLL_DOWN",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "q",
+      "label": "Q",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.7,
+      "y": 0.56,
+      "scale": 0.9,
+      "binding": "KEY_Q",
+      "bindings": [
+        "KEY_Q",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "w",
+      "label": "W",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.775,
+      "y": 0.47,
+      "scale": 0.9,
+      "binding": "KEY_W",
+      "bindings": [
+        "KEY_W",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "e",
+      "label": "E",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.85,
+      "y": 0.56,
+      "scale": 0.9,
+      "binding": "KEY_E",
+      "bindings": [
+        "KEY_E",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "d",
+      "label": "D",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.7,
+      "y": 0.68,
+      "scale": 0.8,
+      "binding": "KEY_D",
+      "bindings": [
+        "KEY_D",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "f",
+      "label": "F",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.775,
+      "y": 0.75,
+      "scale": 0.8,
+      "binding": "KEY_F",
+      "bindings": [
+        "KEY_F",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "r",
+      "label": "R",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.925,
+      "y": 0.68,
+      "scale": 1.0,
+      "binding": "KEY_R",
+      "bindings": [
+        "KEY_R",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i1",
+      "label": "1",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.59,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_1",
+      "bindings": [
+        "KEY_1",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i2",
+      "label": "2",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.655,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_2",
+      "bindings": [
+        "KEY_2",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i3",
+      "label": "3",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.72,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_3",
+      "bindings": [
+        "KEY_3",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i4",
+      "label": "4",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.785,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_4",
+      "bindings": [
+        "KEY_4",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i5",
+      "label": "5",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.85,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_5",
+      "bindings": [
+        "KEY_5",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "i6",
+      "label": "6",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.915,
+      "y": 0.88,
+      "scale": 0.65,
+      "binding": "KEY_6",
+      "bindings": [
+        "KEY_6",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "attack",
+      "label": "A / АТАКА",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.925,
+      "y": 0.47,
+      "scale": 0.8,
+      "binding": "KEY_A",
+      "bindings": [
+        "KEY_A",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "stop",
+      "label": "S / СТОП",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.925,
+      "y": 0.35,
+      "scale": 0.7,
+      "binding": "KEY_S",
+      "bindings": [
+        "KEY_S",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "leftclick",
+      "label": "ЛКМ",
+      "type": "button",
+      "shape": "CIRCLE",
+      "x": 0.85,
+      "y": 0.35,
+      "scale": 0.7,
+      "binding": "MOUSE_LEFT_BUTTON",
+      "bindings": [
+        "MOUSE_LEFT_BUTTON",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "shop",
+      "label": "МАГАЗИН",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.59,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_F5",
+      "bindings": [
+        "KEY_F5",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "score",
+      "label": "TAB",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.7,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_TAB",
+      "bindings": [
+        "KEY_TAB",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "courier",
+      "label": "КУРЬЕР F2",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.81,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_F2",
+      "bindings": [
+        "KEY_F2",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "glyph",
+      "label": "ГЛИФ",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.92,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_G",
+      "bindings": [
+        "KEY_G",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "console",
+      "label": "КОНСОЛЬ",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.43,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_BACKSLASH",
+      "bindings": [
+        "KEY_BACKSLASH",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "pause",
+      "label": "ESC",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.32,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_ESC",
+      "bindings": [
+        "KEY_ESC",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": false,
+      "toggle": false
+    },
+    {
+      "id": "alt",
+      "label": "ALT",
+      "type": "button",
+      "shape": "ROUND_RECT",
+      "x": 0.21,
+      "y": 0.1,
+      "scale": 0.7,
+      "binding": "KEY_ALT_L",
+      "bindings": [
+        "KEY_ALT_L",
+        "NONE",
+        "NONE",
+        "NONE"
+      ],
+      "mouseMoveMode": true,
+      "toggle": true
+    }
+  ]
+}

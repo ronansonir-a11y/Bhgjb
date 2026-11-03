@@ -1,0 +1,92 @@
+name: build-apk
+
+# Builds an INSTALLABLE Dota 2 container shell APK (icon, label, touch overlay,
+# bootstrap, autostart). This is milestone M0: it does NOT bundle Valve game
+# files and does NOT claim the game is playable. See docs/05-CI-PIPELINE.md.
+on:
+  workflow_dispatch:
+    inputs:
+      bundle_runtime:
+        description: 'Download+pack pinned upstream Wine/Box64/Vortek/Goldberg components'
+        type: boolean
+        default: false
+      with_ndk:
+        description: 'Build the arm64-v8a JNI probe with the Android NDK'
+        type: boolean
+        default: true
+  push:
+    paths:
+      - 'android/**'
+      - 'runtime/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK / NDK / CMake
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install \
+            "platforms;android-34" "build-tools;34.0.0" "platform-tools" \
+            "ndk;26.3.11579264" "cmake;3.22.1" 2>&1 | tail -6
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Generate Gradle wrapper (no binary jar in Git)
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.9 --distribution-type bin
+
+      - name: Bundle third-party runtime (optional, offline-safe)
+        if: ${{ inputs.bundle_runtime }}
+        continue-on-error: true
+        run: |
+          python -m pip install --quiet py7zr
+          sudo apt-get update -qq && sudo apt-get install -y -qq zstd p7zip-full >/dev/null || true
+          python runtime/fetch.py --out android/app/src/main/assets/runtime
+          ls -lh android/app/src/main/assets/runtime || true
+
+      - name: Regenerate touch profiles
+        run: |
+          python -m pip install --quiet -r tools/requirements.txt
+          python tools/gen_touch_profile.py --out android/app/src/main/assets/dota2
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: |
+          if [ "${{ inputs.with_ndk }}" = "true" ]; then
+            ./gradlew assembleDebug -PwithNdk --stacktrace --no-daemon
+          else
+            ./gradlew assembleDebug --stacktrace --no-daemon
+          fi
+
+      - name: Collect deliverable
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk Dota2.apk
+          ls -lh Dota2.apk
+          echo "### APK built" >> "$GITHUB_STEP_SUMMARY"
+          echo "Dota2.apk · arm64-v8a · targetSdk 28 · debug-signed (sideload)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Game files are NOT included; copy the full install to /sdcard/Dota2/." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Dota2-apk
+          path: Dota2.apk
+          if-no-files-found: error

@@ -1,0 +1,43 @@
+# ── Valve proprietary binaries (NEVER commit to a public repository) ─────────
+assets/incoming/
+incoming/
+*.zip
+*.7z
+*.tzst
+*.txz
+*.vpk
+*.dll
+*.exe
+*.pdb
+!tools/collect_dota2_win64.ps1
+
+# ── Generated analysis output ────────────────────────────────────────────────
+report/
+out/
+*.apk
+*.keystore
+*.jks
+
+# ── Android / Gradle ─────────────────────────────────────────────────────────
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+android/.cxx/
+.cxx/
+
+# ── Runtime bundles downloaded in CI (large, third-party, licensed separately) ─
+runtime/bundles/
+runtime/fetch-report.json
+android/app/src/main/assets/runtime/
+android/app/src/main/jniLibs/
+third_party/
+gradle/wrapper/gradle-wrapper.jar
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+.venv/
+venv/
