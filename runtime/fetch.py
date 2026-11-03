@@ -80,14 +80,25 @@ def extract_7z(archive: Path, wanted: list[str], outdir: Path) -> list[str]:
                        check=True, stdout=subprocess.DEVNULL)
     outdir.mkdir(parents=True, exist_ok=True)
     copied = []
+    # Whole directories first (e.g. Goldberg's steam_settings.EXAMPLE/).
+    copied_dirs = set()
     for p in tmp.rglob("*"):
-        if not p.is_file():
-            continue
-        if p.name in wanted or (p.parent.name in wanted):
+        if p.is_dir() and p.name in wanted:
             target = outdir / p.name
             if not target.exists():
-                shutil.copy2(p, target)
-                copied.append(p.name)
+                shutil.copytree(p, target)
+            copied.append(p.name + "/")
+            copied_dirs.add(p.resolve())
+    # Then individual files, skipping anything already copied with its directory.
+    for p in tmp.rglob("*"):
+        if not p.is_file() or p.name not in wanted:
+            continue
+        if any(parent.resolve() in copied_dirs for parent in p.parents):
+            continue
+        target = outdir / p.name
+        if not target.exists():
+            shutil.copy2(p, target)
+            copied.append(p.name)
     return sorted(set(copied))
 
 

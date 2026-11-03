@@ -8,6 +8,8 @@ Valve обратно в репозиторий.
 |---|---|---|---|---|
 | `selftest.yml` | каждый `push`/PR | — | лог | Анализатор работает без файлов Valve |
 | `pe-analysis.yml` | `workflow_dispatch` или push в `assets/incoming/**` | ZIP (URL / private release / локальный) | `dota2-pe-report` | Реальные таблицы импортов, `.pdata`, glue-инвентарь |
+
+Push-событие по самому YAML регистрирует workflow в GitHub, но **не** запускает измерение без архива: шаги анализа защищены условием `steps.locate.outputs.zip != ''`. Это позволяет держать воркфлоу зелёным на ветке до появления вашего ZIP.
 | `path-a-probe.yml` | `workflow_dispatch` | тот же ZIP | `path-a-probe` | Эксперимент `pcrecomp disasm64` на малых модулях |
 | `build-apk.yml` | `workflow_dispatch` / изменения `android/**` | — | **`Dota2.apk`** | Установливаемый APK-каркас |
 

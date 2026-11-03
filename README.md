@@ -85,6 +85,23 @@ android/                Gradle-проект APK-каркаса
 .github/workflows/      4 workflow
 ```
 
+## Проверено в GitHub Actions (ветка `arena/52486527-bhgjb`)
+
+| Workflow | Фактический результат |
+|---|---|
+| `selftest` | ✅ `success` — синтетический PE32+ пайплайн **PASS** на каждом push |
+| `build-apk` | ✅ `success` — собран и подписан **`Dota2.apk`** (`arm64-v8a`, `targetSdk 28`, debug-ключ), артефакт `Dota2-apk`, 29 936 байт |
+| `pe-analysis` | ✅ зарегистрирован; без вашего ZIP честно пропускает измерение и не падает |
+| `path-a-probe` | ✅ зарегистрирован; без вашего ZIP пропускает эксперимент `pcrecomp` |
+
+`runtime/fetch.py` отдельно проверен локально на синтетических APK/`7z`: извлечение
+`rootfs.tzst`, `container_pattern.tzst`, `box64-*.tzst`, `vortek-*.tzst` и
+`goldberg/steam_api64.dll` + `steam_settings.EXAMPLE/` работает. Реальные 157 МБ
+Winlator и 13 МБ Goldberg скачиваются только при `bundle_runtime=true` в CI.
+
+> APK **не проверен на физическом устройстве** и не содержит файлов игры: это
+> установливаемый каркас/лаунчер, а не играбельный Dota 2. См. M2–M6 ниже.
+
 ## Статус milestone'ов
 
 | M | Описание | Статус |
