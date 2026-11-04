@@ -10,6 +10,8 @@ Valve обратно в репозиторий.
 | `pe-analysis.yml` | `workflow_dispatch` или push в `assets/incoming/**` | ZIP (URL / private release / локальный) | `dota2-pe-report` | Реальные таблицы импортов, `.pdata`, glue-инвентарь |
 | `path-a-probe.yml` | `workflow_dispatch` | тот же ZIP | `path-a-probe` | Эксперимент `pcrecomp disasm64` на малых модулях |
 | `build-apk.yml` | `workflow_dispatch` / изменения `android/**` | — | **`Dota2.apk`** | Установливаемый APK-каркас |
+| `release.yml` | изменения `android/**`, `runtime/**`, `scripts/**` | — | **Release `mobile`: `Dota2.apk` + 2 ZIP** | Подписанный APK, кликабельный с телефона |
+| `depot-download.yml` | opt-in `ENABLE_DEPOT=1` | ваш Steam-аккаунт (secrets) | зашифрованный artifact | Депо 373303 **не** попадает в Releases |
 
 Push-событие по самому YAML регистрирует workflow в GitHub, но **не** запускает измерение без архива: шаги анализа защищены условием `steps.locate.outputs.zip != ''`. Это позволяет держать воркфлоу зелёным на ветке до появления вашего ZIP.
 

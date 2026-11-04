@@ -30,6 +30,8 @@ android/.cxx/
 
 # ── Runtime bundles downloaded in CI (large, third-party, licensed separately) ─
 runtime/bundles/
+dist/
+scripts/__pycache__/
 runtime/fetch-report.json
 android/app/src/main/assets/runtime/
 android/app/src/main/jniLibs/

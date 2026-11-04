@@ -1,24 +1,48 @@
 {
-  "schema": 1,
+  "schema": 2,
   "gameRoot": "/sdcard/Dota2",
   "exe": "game/bin/win64/dota2.exe",
   "socket": "dota2-input",
-  "autoLaunch": true,
+  "releaseTag": "mobile",
+  "demoOnStart": true,
+  "autoLaunch": false,
   "patchSteamApi": true,
   "preset": "requested",
-  "_comment": "Автозапуск ровно с запрошенной строкой. См. note у пресета requested: +dota_launch_custom_game требует <addon> <map>. Для ботов используйте preset=bots.",
+  "_comment": "Phone-first build. DEMO starts right after install and needs no files. Auto-launch is off so the user sees the menu first.",
   "presets": {
     "requested": {
-      "args": ["-novid", "-vulkan", "-console", "+dota_launch_custom_game"],
-      "note": "Ровно запрошенная строка. ВАЖНО: +dota_launch_custom_game требует два аргумента <addon> <map>; добавьте их в этот массив и положите аддон в /sdcard/Dota2/game/dota_addons/. Также нужен установленный DLC AppID 476580 для -vulkan."
+      "args": [
+        "-novid",
+        "-vulkan",
+        "-console",
+        "+dota_launch_custom_game"
+      ],
+      "note": "Exact requested command line. +dota_launch_custom_game requires <addon> <map>; add them here. -vulkan needs DLC AppID 476580 content."
     },
     "bots": {
-      "args": ["-novid", "-vulkan", "-console", "+map", "dota", "+dota_bot_populate"],
-      "note": "Локальный матч с ботами без Steam.exe (исторический оффлайн-рецепт Source 2). Требует корректного steamclient/GC-шима, см. docs/03 раздел 4."
+      "args": [
+        "-novid",
+        "-vulkan",
+        "-console",
+        "+map",
+        "dota",
+        "+dota_bot_populate"
+      ],
+      "note": "Offline bot match recipe. Needs a working steamclient/GC shim (M6), not just Goldberg."
     },
     "diagnostic": {
-      "args": ["-novid", "-vulkan", "-vconsole", "-condebug", "-windowed", "-w", "1280", "-h", "720"],
-      "note": "Первый запуск: максимум логов, минимальное разрешение. Рекомендуется для M3–M4."
+      "args": [
+        "-novid",
+        "-vulkan",
+        "-vconsole",
+        "-condebug",
+        "-windowed",
+        "-w",
+        "1280",
+        "-h",
+        "720"
+      ],
+      "note": "First container boot: maximum logs, low resolution."
     }
   },
   "env": {

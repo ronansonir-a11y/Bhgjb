@@ -17,6 +17,7 @@ final class LaunchConfig {
     final String presetName;
     final String socketName;
     final boolean autoLaunch;
+    final boolean demoOnStart;
     final boolean patchSteamApi;
     final List<String> args = new ArrayList<>();
     final Map<String, String> env = new LinkedHashMap<>();
@@ -27,6 +28,7 @@ final class LaunchConfig {
         presetName = root.optString("preset", "requested");
         socketName = root.optString("socket", "dota2-input");
         autoLaunch = root.optBoolean("autoLaunch", false);
+        demoOnStart = root.optBoolean("demoOnStart", false);
         patchSteamApi = root.optBoolean("patchSteamApi", true);
 
         JSONObject presets = root.getJSONObject("presets");

@@ -1,0 +1,83 @@
+name: depot-download-optional
+
+# STRICTLY OPT-IN. Downloads depot 373303 (Dota 2 Win64 binaries) with the
+# USER'S OWN Steam account via SteamRE/DepotDownloader, then uploads an
+# AES-256-ENCRYPTED Actions artifact (1 day). It NEVER publishes Valve files
+# to a GitHub Release, to Git, or into the APK.
+#
+# Enable manually: set repository variable ENABLE_DEPOT=1 and secrets
+# STEAM_USER / STEAM_PASS / DEPOT_PASSPHRASE. Make the repository PRIVATE first.
+# Steam Guard / 2FA will usually require an interactive login, so this job is
+# best-effort and can fail without affecting any other workflow.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/depot-download.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  depot:
+    if: vars.ENABLE_DEPOT == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STEAM_USER: ${{ secrets.STEAM_USER }}
+      STEAM_PASS: ${{ secrets.STEAM_PASS }}
+      DEPOT_PASSPHRASE: ${{ secrets.DEPOT_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Legal + credential guard
+        run: |
+          echo "::warning::This job downloads Valve-proprietary binaries for the repo owner's personal use only. Make the repo PRIVATE. Never publish the result as a Release asset."
+          for v in STEAM_USER STEAM_PASS DEPOT_PASSPHRASE; do
+            eval "val=\${$v:-}"
+            if [ -z "$val" ]; then echo "::error::Missing secret $v"; exit 1; fi
+          done
+
+      - name: Fetch DepotDownloader
+        run: |
+          mkdir -p /tmp/dd
+          gh release download -R SteamRE/DepotDownloader \
+            -p DepotDownloader-linux-x64.zip -D /tmp/dd --clobber
+          unzip -oq /tmp/dd/DepotDownloader-linux-x64.zip -d /tmp/dd/bin
+          find /tmp/dd/bin -type f -name 'DepotDownloader*' -exec chmod +x {} \;
+
+      - name: Download depot 373303 (best-effort, Steam Guard may block CI)
+        continue-on-error: true
+        run: |
+          mkdir -p /tmp/depot
+          DD="$(find /tmp/dd/bin -type f -name 'DepotDownloader' | head -1)"
+          [ -z "$DD" ] && DD="$(find /tmp/dd/bin -type f -name 'DepotDownloader*' | head -1)"
+          "$DD" -app 570 -depot 373303 -os windows -arch 64 \
+                -username "$STEAM_USER" -password "$STEAM_PASS" \
+                -dir /tmp/depot -max-downloads 8
+          find /tmp/depot -type f | wc -l
+
+      - name: Encrypt and upload (never a Release asset)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ ! -d /tmp/depot ] || [ -z "$(ls -A /tmp/depot 2>/dev/null)" ]; then
+            echo "No depot data (Steam Guard / auth failure). Nothing uploaded."
+            exit 0
+          fi
+          ( cd /tmp/depot && zip -qr /tmp/dota2-win64-bins.zip . )
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in /tmp/dota2-win64-bins.zip \
+            -out dota2-depot-373303.zip.enc -pass env:DEPOT_PASSPHRASE
+          ls -lh dota2-depot-373303.zip.enc
+          echo "Decrypt locally with: openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in dota2-depot-373303.zip.enc -out dota2-win64-bins.zip"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        continue-on-error: true
+        with:
+          name: dota2-depot-373303-encrypted
+          path: dota2-depot-373303.zip.enc
+          if-no-files-found: ignore
+          retention-days: 1

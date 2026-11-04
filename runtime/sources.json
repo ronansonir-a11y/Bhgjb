@@ -1,7 +1,7 @@
 {
-  "schema": 1,
+  "schema": 2,
   "pinned_at": "2026-11-03",
-  "note": "Pinned upstream open-source runtime artifacts. NONE of these are Valve files. Downloads happen only inside GitHub Actions (or locally, explicitly). See runtime/README.md and docs/06-LEGAL-AND-RISKS.md.",
+  "note": "Pinned upstream open-source runtime artifacts. NONE are Valve files. CI repacks them into two plain ZIPs for the phone-first APK.",
   "components": [
     {
       "id": "winlator-apk",
@@ -11,14 +11,38 @@
       "license": "LGPL-2.1",
       "source": "https://github.com/brunodev85/winlator/releases/tag/v11.2.0",
       "extract": [
-        {"from": "assets/rootfs.tzst", "to": "rootfs.tzst"},
-        {"from": "assets/rootfs_patches.tzst", "to": "rootfs_patches.tzst"},
-        {"from": "assets/container_pattern.tzst", "to": "container_pattern.tzst"},
-        {"from": "assets/pulseaudio.tzst", "to": "pulseaudio.tzst"},
-        {"from": "assets/box64/box64-0.4.4.tzst", "to": "box64-0.4.4.tzst"},
-        {"from": "assets/graphics_driver/turnip-26.2.0.tzst", "to": "turnip-26.2.0.tzst"},
-        {"from": "assets/graphics_driver/vortek-2.1.tzst", "to": "vortek-2.1.tzst"},
-        {"from": "assets/graphics_driver/gladio-1.1.tzst", "to": "gladio-1.1.tzst"}
+        {
+          "from": "assets/rootfs.tzst",
+          "to": "rootfs.tzst"
+        },
+        {
+          "from": "assets/rootfs_patches.tzst",
+          "to": "rootfs_patches.tzst"
+        },
+        {
+          "from": "assets/container_pattern.tzst",
+          "to": "container_pattern.tzst"
+        },
+        {
+          "from": "assets/pulseaudio.tzst",
+          "to": "pulseaudio.tzst"
+        },
+        {
+          "from": "assets/box64/box64-0.4.4.tzst",
+          "to": "box64-0.4.4.tzst"
+        },
+        {
+          "from": "assets/graphics_driver/turnip-26.2.0.tzst",
+          "to": "turnip-26.2.0.tzst"
+        },
+        {
+          "from": "assets/graphics_driver/vortek-2.1.tzst",
+          "to": "vortek-2.1.tzst"
+        },
+        {
+          "from": "assets/graphics_driver/gladio-1.1.tzst",
+          "to": "gladio-1.1.tzst"
+        }
       ],
       "comment": "Asset names come from brunodev85/winlator-app app/src/main/assets/. This APK is only a source of third-party components; our own APK does not reuse Winlator's Java code."
     },
@@ -29,7 +53,12 @@
       "expected_size": 13455496,
       "license": "LGPL-3.0",
       "source": "https://github.com/Detanup01/gbe_fork/releases",
-      "extract_by_basename": ["steam_api64.dll", "steam_interfaces.txt", "generate_interfaces.exe", "steam_settings.EXAMPLE"],
+      "extract_by_basename": [
+        "steam_api64.dll",
+        "steam_interfaces.txt",
+        "generate_interfaces.exe",
+        "steam_settings.EXAMPLE"
+      ],
       "to": "goldberg",
       "comment": "The internal 7z layout differs between releases, so files are located by basename. steam_interfaces.txt MUST be generated from the ORIGINAL game DLL with generate_interfaces; see docs/03 section 4."
     },
@@ -43,5 +72,29 @@
       "optional": true,
       "comment": "Alternative Box64 build unpackable with `tar --zstd -xf`. Optional: the Winlator APK already ships box64-0.4.4.tzst."
     }
-  ]
+  ],
+  "mobile": {
+    "release_tag": "mobile",
+    "release_url": "https://github.com/ronansonir-a11y/Bhgjb/releases/tag/mobile",
+    "base": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/",
+    "assets": [
+      {
+        "id": "runtime-core",
+        "name": "dota2-runtime-core.zip",
+        "url": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-runtime-core.zip"
+      },
+      {
+        "id": "goldberg",
+        "name": "dota2-goldberg.zip",
+        "url": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-goldberg.zip"
+      },
+      {
+        "id": "manifest",
+        "name": "dota2-runtime-manifest.json",
+        "url": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-runtime-manifest.json"
+      }
+    ],
+    "packer": "scripts/pack_runtime.sh (GitHub Actions: release.yml)",
+    "note": "These ZIPs contain ONLY third-party OSS components. The APK downloads them itself with a ProgressBar. No Valve files."
+  }
 }

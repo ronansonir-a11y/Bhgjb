@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "releaseTag": "mobile",
+  "base": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/",
+  "manifestUrl": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-runtime-manifest.json",
+  "assets": [
+    {
+      "id": "runtime-core",
+      "name": "dota2-runtime-core.zip",
+      "url": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-runtime-core.zip"
+    },
+    {
+      "id": "goldberg",
+      "name": "dota2-goldberg.zip",
+      "url": "https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/dota2-goldberg.zip"
+    }
+  ],
+  "note": "Only third-party OSS components (Wine/Box64/Turnip/Vortek/Goldberg). NO Valve files. Built by .github/workflows/release.yml from runtime/sources.json."
+}

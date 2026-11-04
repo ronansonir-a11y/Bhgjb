@@ -1,21 +1,13 @@
-# assets/dota2
+# assets/dota2 — конфигурация, без файлов Valve
 
-These are **configuration files only** — no Valve binaries.
-
-| File | Purpose |
+| Файл | Назначение |
 |---|---|
-| `launch.json` | three launch presets (`requested`, `bots`, `diagnostic`), env vars, autoLaunch |
-| `controls.json` | touch overlay schema for `TouchOverlayView.java` (generated) |
-| `controls.icp` | the same layout in Winlator `.icp` format (generated) |
-| `bootstrap.sh` | preflight + `box64 wine64 dota2.exe $DOTA_ARGS` |
-| `steam_appid.txt` | `570`, for Goldberg `steam_settings/` |
+| `launch.json` | пресеты запуска, `demoOnStart: true`, env |
+| `controls.json` / `controls.icp` | 28 сенсорных элементов (генерируются) |
+| `runtime-sources.json` | **URL двух ZIP-рантаймов в GitHub Releases** для встроенного загрузчика |
+| `bootstrap.sh` | автопоиск Box64/Wine/rootfs и `exec` контейнера |
+| `steam_appid.txt` | `570` |
 
-Regenerate the layouts after editing `tools/gen_touch_profile.py`:
-
-```bash
-python tools/gen_touch_profile.py --out android/app/src/main/assets/dota2
-```
-
-The `runtime/` asset directory (sibling of this one) is created by
-`runtime/fetch.py` in CI and contains only third-party open-source components
-under their own licences. It is gitignored.
+`RuntimeInstaller.java` скачивает ZIP'ы с ProgressBar, проверяет SHA-256 из
+`dota2-runtime-manifest.json` и распаковывает в `filesDir/runtime/`.
+`DemoSurfaceView.java` работает сразу после установки без сети и без VPK.
