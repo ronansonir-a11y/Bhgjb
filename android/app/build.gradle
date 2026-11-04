@@ -1,0 +1,56 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'dev.arena.dota2port'
+    compileSdk 34
+    // Must match the SDK package installed by build-apk.yml.
+    ndkVersion '26.3.11579264'
+
+    defaultConfig {
+        applicationId 'dev.arena.dota2port'
+        minSdk 26
+        // Deliberate: API 29+ forbids execve() of ELF files from writable app data.
+        // A Wine/Box64 container must exec unpacked binaries at runtime.
+        // All working Winlator forks (e.g. Bannerlator) pin targetSdk 28.
+        targetSdk 28
+        versionCode 1
+        versionName '0.1.0'
+        ndk { abiFilters 'arm64-v8a' }
+    }
+
+    // Optional: build the tiny arm64 JNI probe. CI passes -PwithNdk after
+    // installing the NDK. Without it the APK still builds (Java guards the load).
+    if (project.hasProperty('withNdk')) {
+        externalNativeBuild {
+            cmake {
+                path 'src/main/cpp/CMakeLists.txt'
+                version '3.22.1'
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Sideload-only debug signing; no release keys are stored in CI.
+            debuggable true
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets']
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
+}
+
+dependencies {
+    // Intentionally empty: pure framework Java/Kotlin-free, no AndroidX.
+}

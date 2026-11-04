@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Dota 2</string>
+    <string name="launch">Запустить</string>
+    <string name="check">Проверить файлы</string>
+    <string name="log">Лог</string>
+    <string name="status_title">Dota 2 · win64 → arm64-v8a</string>
+    <string name="legal_hint">Исследовательский контейнер. Файлы игры не включены.</string>
+</resources>

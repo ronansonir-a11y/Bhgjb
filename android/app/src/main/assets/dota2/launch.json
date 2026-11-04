@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "gameRoot": "/sdcard/Dota2",
+  "exe": "game/bin/win64/dota2.exe",
+  "socket": "dota2-input",
+  "autoLaunch": true,
+  "patchSteamApi": true,
+  "preset": "requested",
+  "_comment": "Автозапуск ровно с запрошенной строкой. См. note у пресета requested: +dota_launch_custom_game требует <addon> <map>. Для ботов используйте preset=bots.",
+  "presets": {
+    "requested": {
+      "args": ["-novid", "-vulkan", "-console", "+dota_launch_custom_game"],
+      "note": "Ровно запрошенная строка. ВАЖНО: +dota_launch_custom_game требует два аргумента <addon> <map>; добавьте их в этот массив и положите аддон в /sdcard/Dota2/game/dota_addons/. Также нужен установленный DLC AppID 476580 для -vulkan."
+    },
+    "bots": {
+      "args": ["-novid", "-vulkan", "-console", "+map", "dota", "+dota_bot_populate"],
+      "note": "Локальный матч с ботами без Steam.exe (исторический оффлайн-рецепт Source 2). Требует корректного steamclient/GC-шима, см. docs/03 раздел 4."
+    },
+    "diagnostic": {
+      "args": ["-novid", "-vulkan", "-vconsole", "-condebug", "-windowed", "-w", "1280", "-h", "720"],
+      "note": "Первый запуск: максимум логов, минимальное разрешение. Рекомендуется для M3–M4."
+    }
+  },
+  "env": {
+    "BOX64_LOG": "0",
+    "BOX64_DYNAREC_STRONGMEM": "0",
+    "WINEESYNC": "1",
+    "WINEDEBUG": "-all",
+    "DXVK_HUD": "0",
+    "MESA_EXTENSION_MAX_YEAR": "2003"
+  },
+  "requiredOnDevice": [
+    "game/bin/win64/dota2.exe",
+    "game/bin/win64/rendersystemvulkan.dll",
+    "game/bin/win64/steam_api64.dll",
+    "game/dota/bin/win64/client.dll",
+    "game/dota/bin/win64/server.dll",
+    "game/dota/pak01_dir.vpk",
+    "game/dota/pak01_*.vpk",
+    "game/core/",
+    "DLC AppID 476580 (Dota 2 - Vulkan support) content"
+  ]
+}

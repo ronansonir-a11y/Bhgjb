@@ -1,0 +1,131 @@
+name: pe-analysis
+
+# Stage M1: measure the real import/export surface of the user's Dota 2 win64 ZIP.
+# The ZIP must come from a PRIVATE source (private release asset, signed URL, or a
+# local file in assets/incoming/ which is gitignored). Never commit game binaries.
+on:
+  workflow_dispatch:
+    inputs:
+      archive_url:
+        description: 'Optional signed URL of dota2-win64-bins.zip'
+        required: false
+        default: ''
+      deep:
+        description: 'Capstone linear sweep of .text (slow on client.dll)'
+        type: boolean
+        default: true
+  push:
+    paths:
+      - 'assets/incoming/**'
+      - '.github/workflows/pe-analysis.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install analysis dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/requirements.txt
+
+      - name: Locate the input archive
+        id: locate
+        env:
+          ARCHIVE_URL: ${{ inputs.archive_url }}
+          DOTA2_BINS_URL: ${{ vars.DOTA2_BINS_URL }}
+        run: |
+          set -euo pipefail
+          mkdir -p assets/incoming
+          ZIP=""
+          if [ -n "${ARCHIVE_URL:-}" ]; then
+            echo "Using workflow_dispatch archive_url"
+            curl -fL --retry 2 -o assets/incoming/input.zip "$ARCHIVE_URL"
+            ZIP="assets/incoming/input.zip"
+          elif ls assets/incoming/*.zip >/dev/null 2>&1; then
+            ZIP="$(ls -S assets/incoming/*.zip | head -1)"
+            echo "Using local archive $ZIP"
+          elif [ -n "${DOTA2_BINS_URL:-}" ]; then
+            if [[ "$DOTA2_BINS_URL" == *"/releases/download/"* ]]; then
+              echo "Downloading private release asset via gh"
+              gh release download dota2-bins -p dota2-win64-bins.zip \
+                -D assets/incoming --clobber
+              ZIP="assets/incoming/dota2-win64-bins.zip"
+            else
+              curl -fL --retry 2 -o assets/incoming/input.zip "$DOTA2_BINS_URL"
+              ZIP="assets/incoming/input.zip"
+            fi
+          fi
+          if [ -z "$ZIP" ] || [ ! -s "$ZIP" ]; then
+            echo "::notice::No archive supplied — analysis skipped. Pass archive_url, set DOTA2_BINS_URL, or push a ZIP to assets/incoming/."
+            echo "zip=" >> "$GITHUB_OUTPUT"
+            echo "size=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "zip=$(realpath "$ZIP")" >> "$GITHUB_OUTPUT"
+          echo "size=$(stat -c%s "$ZIP")" >> "$GITHUB_OUTPUT"
+
+      - if: steps.locate.outputs.zip != ''
+        name: Install llvm-readobj
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq llvm >/dev/null
+
+      - if: steps.locate.outputs.zip != ''
+        name: Validate archive (structure, PE32+/AMD64, sha256, zip-slip)
+        run: |
+          python tools/validate_archive.py \
+            --zip "${{ steps.locate.outputs.zip }}" \
+            --out report --strict
+
+      - if: steps.locate.outputs.zip != ''
+        name: PE32+ import/export/SEH analysis
+        env:
+          DEEP: ${{ inputs.deep }}
+        run: |
+          EXTRA=""
+          if [ "${DEEP:-true}" = "true" ]; then EXTRA="--deep"; fi
+          python tools/analyze_pe.py \
+            --input "${{ steps.locate.outputs.zip }}" \
+            --manifest data/depot-373303-2026-11-03.tsv \
+            --out report $EXTRA
+
+      - if: steps.locate.outputs.zip != ''
+        name: Generate Win32/Vulkan glue inventory
+        run: |
+          python tools/gen_glue_inventory.py \
+            --analysis report/pe-analysis.json --out report
+
+      - if: steps.locate.outputs.zip != ''
+        name: Independent llvm-readobj cross-check
+        run: |
+          chmod +x tools/llvm_readobj_dump.sh
+          tools/llvm_readobj_dump.sh "${{ steps.locate.outputs.zip }}" report/llvm-readobj
+
+      - if: steps.locate.outputs.zip != ''
+        name: Publish report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dota2-pe-report
+          path: report/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - if: steps.locate.outputs.zip != ''
+        name: Summary
+        run: |
+          echo "### PE analysis complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "- archive bytes: ${{ steps.locate.outputs.size }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- artifacts: report/PE-REPORT.md, glue-inventory.md, api-surface.json, import-graph.dot" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          head -40 report/PE-REPORT.md >> "$GITHUB_STEP_SUMMARY" || true

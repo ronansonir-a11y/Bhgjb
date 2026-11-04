@@ -1,0 +1,47 @@
+name: selftest
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install analysis dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r tools/requirements.txt
+
+      - name: Python syntax check
+        run: python -m compileall -q tools runtime
+
+      - name: Validate YAML / JSON / XML configs
+        run: |
+          python - <<'PY'
+          import glob, json, xml.etree.ElementTree as ET
+          import yaml
+          for f in glob.glob('.github/workflows/*.yml'):
+              with open(f) as fh: yaml.safe_load(fh)
+              print('yaml OK', f)
+          for f in ['runtime/sources.json', 'data/upstream-sources.json',
+                    'android/app/src/main/assets/dota2/launch.json',
+                    'android/app/src/main/assets/dota2/controls.json',
+                    'android/app/src/main/assets/dota2/controls.icp']:
+              with open(f) as fh: json.load(fh)
+              print('json OK', f)
+          for f in glob.glob('android/app/src/main/res/**/*.xml', recursive=True) + \
+                   ['android/app/src/main/AndroidManifest.xml']:
+              ET.parse(f)
+              print('xml  OK', f)
+          PY
+
+      - name: End-to-end pipeline selftest (synthetic PE32+, no Valve files)
+        run: python tools/selftest.py

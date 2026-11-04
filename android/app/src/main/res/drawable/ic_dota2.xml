@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same neutral mark, usable inside the UI. Trademark note in LICENSE. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,14 L94,54 L54,94 L14,54 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#F0C674"
+        android:strokeWidth="5" />
+    <path
+        android:pathData="M40,36 L68,54 L40,72 Z"
+        android:fillColor="#C23B22" />
+</vector>

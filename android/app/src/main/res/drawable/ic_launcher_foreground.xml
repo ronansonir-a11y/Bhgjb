@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Neutral geometric mark (NOT the Valve/Dota 2 logo). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- outer diamond -->
+    <path
+        android:pathData="M54,22 L86,54 L54,86 L22,54 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#F0C674"
+        android:strokeWidth="4" />
+    <!-- inner rune -->
+    <path
+        android:pathData="M42,38 L66,54 L42,70 Z"
+        android:fillColor="#C23B22" />
+    <path
+        android:pathData="M66,54 L78,54"
+        android:fillColor="#00000000"
+        android:strokeColor="#E8EAED"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+</vector>

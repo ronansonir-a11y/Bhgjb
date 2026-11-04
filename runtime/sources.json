@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "pinned_at": "2026-11-03",
+  "note": "Pinned upstream open-source runtime artifacts. NONE of these are Valve files. Downloads happen only inside GitHub Actions (or locally, explicitly). See runtime/README.md and docs/06-LEGAL-AND-RISKS.md.",
+  "components": [
+    {
+      "id": "winlator-apk",
+      "kind": "apk",
+      "url": "https://github.com/brunodev85/winlator/releases/download/v11.2.0/Winlator_11.2.apk",
+      "expected_size": 157549075,
+      "license": "LGPL-2.1",
+      "source": "https://github.com/brunodev85/winlator/releases/tag/v11.2.0",
+      "extract": [
+        {"from": "assets/rootfs.tzst", "to": "rootfs.tzst"},
+        {"from": "assets/rootfs_patches.tzst", "to": "rootfs_patches.tzst"},
+        {"from": "assets/container_pattern.tzst", "to": "container_pattern.tzst"},
+        {"from": "assets/pulseaudio.tzst", "to": "pulseaudio.tzst"},
+        {"from": "assets/box64/box64-0.4.4.tzst", "to": "box64-0.4.4.tzst"},
+        {"from": "assets/graphics_driver/turnip-26.2.0.tzst", "to": "turnip-26.2.0.tzst"},
+        {"from": "assets/graphics_driver/vortek-2.1.tzst", "to": "vortek-2.1.tzst"},
+        {"from": "assets/graphics_driver/gladio-1.1.tzst", "to": "gladio-1.1.tzst"}
+      ],
+      "comment": "Asset names come from brunodev85/winlator-app app/src/main/assets/. This APK is only a source of third-party components; our own APK does not reuse Winlator's Java code."
+    },
+    {
+      "id": "goldberg",
+      "kind": "7z",
+      "url": "https://github.com/Detanup01/gbe_fork/releases/download/release-2026_09_27/emu-win-release-vs22.7z",
+      "expected_size": 13455496,
+      "license": "LGPL-3.0",
+      "source": "https://github.com/Detanup01/gbe_fork/releases",
+      "extract_by_basename": ["steam_api64.dll", "steam_interfaces.txt", "generate_interfaces.exe", "steam_settings.EXAMPLE"],
+      "to": "goldberg",
+      "comment": "The internal 7z layout differs between releases, so files are located by basename. steam_interfaces.txt MUST be generated from the ORIGINAL game DLL with generate_interfaces; see docs/03 section 4."
+    },
+    {
+      "id": "box64-component",
+      "kind": "tzst",
+      "url": "https://github.com/brunodev85/winlator/raw/main/installable_components/box64/box64-0.4.5.tzst",
+      "license": "MIT",
+      "source": "https://github.com/brunodev85/winlator/tree/main/installable_components/box64",
+      "to": "box64-0.4.5.tzst",
+      "optional": true,
+      "comment": "Alternative Box64 build unpackable with `tar --zstd -xf`. Optional: the Winlator APK already ships box64-0.4.4.tzst."
+    }
+  ]
+}
