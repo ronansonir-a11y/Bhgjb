@@ -116,9 +116,9 @@ jobs:
         if: failure()
         run: |
           if [ -f android/build.log ]; then
-            tail -90 android/build.log | while IFS= read -r l; do
-              echo "::error::${l:0:400}"
-            done
+            { grep -A16 'What went wrong' android/build.log | head -18;
+              grep -E '^e: |error:|FAILED|Lint found|Execution failed' android/build.log | head -8;
+            } | while IFS= read -r l; do echo "::error::${l:0:400}"; done
           fi
 
       - name: Upload Gradle log on failure
