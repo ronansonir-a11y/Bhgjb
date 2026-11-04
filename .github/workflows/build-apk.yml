@@ -92,10 +92,9 @@ jobs:
         if: failure()
         run: |
           if [ -f android/build.log ]; then
-            grep -E 'FAILURE:|What went wrong|^> |Caused by:|error:|Execution failed|Could not|not found|Exception' \
-              android/build.log | tail -40 | while IFS= read -r l; do
-                echo "::error::${l:0:300}"
-              done
+            tail -90 android/build.log | while IFS= read -r l; do
+              echo "::error::${l:0:400}"
+            done
           fi
 
       - name: Upload Gradle log on failure
