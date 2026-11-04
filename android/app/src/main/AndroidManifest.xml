@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- /sdcard/Dota2/ access for the game content. targetSdk is pinned to 28,
-         so legacy external storage + requestLegacyExternalStorage is sufficient;
-         MANAGE_EXTERNAL_STORAGE is deliberately NOT requested. -->
+    <!-- /sdcard/Dota2/ access for game content. targetSdk 28 keeps legacy
+         external storage on Android 10; on Android 11+ the user grants
+         "All files access" via the in-app button (MANAGE_EXTERNAL_STORAGE). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Android 11+: needed for /sdcard/Dota2/ (user grants it in Settings). -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 

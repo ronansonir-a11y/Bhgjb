@@ -1,32 +1,29 @@
 # runtime/ — пинованные сторонние компоненты
 
-Здесь **нет кода Valve и нет бинарников**. Это только манифест с URL и скрипт,
-который во время сборки APK скачивает открытые компоненты:
+Здесь **нет кода Valve**. `sources.json` описывает открытые апстримы; в CI
+`scripts/pack_runtime.sh` переупаковывает их в **два обычных ZIP**, которые
+установленное приложение скачивает само, с ProgressBar, без ПК и без ADB.
 
-| id | Что | Лицензия | Откуда |
-|---|---|---|---|
-| `winlator-apk` | `rootfs.tzst` (glibc/Wine), `container_pattern.tzst` (Wine prefix), `box64-0.4.4.tzst`, `turnip-26.2.0.tzst`, `vortek-2.1.tzst`, `pulseaudio.tzst` | LGPL-2.1 | [Winlator v11.2.0 release](https://github.com/brunodev85/winlator/releases/tag/v11.2.0) |
-| `goldberg` | `steam_api64.dll`, `generate_interfaces.exe`, `steam_settings.EXAMPLE` | LGPL-3.0 | [gbe_fork release-2026_09_27](https://github.com/Detanup01/gbe_fork/releases) |
-| `box64-component` | альтернативный `box64-0.4.5.tzst` | MIT | [Winlator installable_components](https://github.com/brunodev85/winlator/tree/main/installable_components/box64) |
+| Файл в Releases `mobile` | Что внутри | Лицензия |
+|---|---|---|
+| `dota2-runtime-core.zip` | `rootfs/` (Wine+glibc), `box64-*`, `turnip-*`, `vortek-*`, `container_pattern/`, `LICENSES.txt` | LGPL-2.1 / MIT |
+| `dota2-goldberg.zip` | `steam_api64.dll` (Goldberg), `steam_settings/`, `LICENSES.txt` | LGPL-3.0 |
+| `dota2-runtime-manifest.json` | размеры + SHA-256 обоих ZIP | — |
 
-```bash
-python -m pip install py7zr
-python runtime/fetch.py --out android/app/src/main/assets/runtime
+Источники (пинованы в `sources.json`):
+[Winlator v11.2.0](https://github.com/brunodev85/winlator/releases/tag/v11.2.0)
+· [Goldberg gbe_fork](https://github.com/Detanup01/gbe_fork/releases)
+· [Box64](https://github.com/ptitSeb/box64) · [FEX](https://github.com/FEX-Emu/FEX).
+
+### Путь на телефоне
+
+```
+Dota2.apk → «Скачать рантайм» → HttpURLConnection + ProgressBar
+          → SHA-256 сверка → ZipInputStream → filesDir/runtime/
+          → «Запустить» → bootstrap.sh ищет box64/wine64/rootfs → exec
 ```
 
-В `build-apk.yml` этот шаг вызывается только при `bundle_runtime=true` и помечен
-`continue-on-error`: даже без сети APK-каркас собирается. Результат кладётся в
-`android/app/src/main/assets/runtime/` (в `.gitignore`), а скачанные архивы — в
-`runtime/bundles/` (тоже в `.gitignore`).
-
-## Что НЕ делает fetch.py
-
-* не скачивает `.dll`/`.exe`/VPK игры;
-* не собирает Wine/Box64/FEX из исходников под bionic (это отдельный проект);
-* не распаковывает `rootfs.tzst` в работающий контейнер — это задача M3 и
-  делается на устройстве; `bootstrap.sh` честно сообщает, чего не хватает;
-* не генерирует `steam_interfaces.txt`: это делается из **оригинального**
-  `steam_api64.dll` утилитой `generate_interfaces` на вашей машине/устройстве.
-
-См. [docs/03-PATH-B-CONTAINER.md](../docs/03-PATH-B-CONTAINER.md) и
+`fetch.py` остаётся для локальной/CI-отладки; приложение его не использует.
+Ни один ZIP не содержит `.dll`/`.exe`/VPK игры. См.
+[docs/07-MOBILE-ONLY.md](../docs/07-MOBILE-ONLY.md) и
 [docs/06-LEGAL-AND-RISKS.md](../docs/06-LEGAL-AND-RISKS.md).

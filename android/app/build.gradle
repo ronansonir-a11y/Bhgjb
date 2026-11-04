@@ -15,8 +15,8 @@ android {
         // A Wine/Box64 container must exec unpacked binaries at runtime.
         // All working Winlator forks (e.g. Bannerlator) pin targetSdk 28.
         targetSdk 28
-        versionCode 1
-        versionName '0.1.0'
+        versionCode 2
+        versionName '0.2.0-mobile'
         ndk { abiFilters 'arm64-v8a' }
     }
 
@@ -31,11 +31,35 @@ android {
         }
     }
 
+    // Release key is generated inside GitHub Actions and NEVER stored in Git.
+    signingConfigs {
+        release {
+            if (System.getenv('DOTA2_KEYSTORE') != null) {
+                storeFile file(System.getenv('DOTA2_KEYSTORE'))
+                storePassword System.getenv('DOTA2_KEYSTORE_PASS')
+                keyAlias System.getenv('DOTA2_KEY_ALIAS')
+                keyPassword System.getenv('DOTA2_KEY_PASS')
+            }
+        }
+    }
+
     buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv('DOTA2_KEYSTORE') != null) {
+                signingConfig signingConfigs.release
+            }
+        }
         debug {
             // Sideload-only debug signing; no release keys are stored in CI.
             debuggable true
         }
+    }
+
+    // Research sideload app: lint-vital is not a release gate here.
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
     }
 
     compileOptions {

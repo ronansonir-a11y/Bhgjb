@@ -2,8 +2,12 @@
 <resources>
     <string name="app_name">Dota 2</string>
     <string name="launch">Запустить</string>
-    <string name="check">Проверить файлы</string>
+    <string name="check">Проверить</string>
     <string name="log">Лог</string>
+    <string name="demo">ДЕМО (без файлов)</string>
+    <string name="install_runtime">Скачать рантайм</string>
+    <string name="content">Загрузить контент</string>
+    <string name="access">Доступ к файлам</string>
     <string name="status_title">Dota 2 · win64 → arm64-v8a</string>
-    <string name="legal_hint">Исследовательский контейнер. Файлы игры не включены.</string>
+    <string name="legal_hint">Исследовательский контейнер. Файлов Valve нет. ДЕМО — наш рендерер, не Source 2.</string>
 </resources>

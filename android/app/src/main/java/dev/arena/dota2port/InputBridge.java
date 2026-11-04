@@ -26,12 +26,19 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * overlay remains testable. This class does NOT claim to inject into Windows.
  */
 final class InputBridge {
+    /** In-process subscribers (demo renderer, HUD) receive every event too. */
+    public interface Listener { void onEvent(String eventJson); }
+
     private static final String TAG = "Dota2Input";
     private static final Charset UTF8 = Charset.forName("UTF-8");
     private static final int MAX_RECENT = 200;
     private static final InputBridge INSTANCE = new InputBridge();
 
     private final List<OutputStream> clients = new CopyOnWriteArrayList<>();
+    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+
+    void addListener(Listener l) { if (l != null && !listeners.contains(l)) listeners.add(l); }
+    void removeListener(Listener l) { listeners.remove(l); }
     private final LinkedList<String> recent = new LinkedList<>();
     private volatile LocalServerSocket server;
 
@@ -77,6 +84,9 @@ final class InputBridge {
         synchronized (recent) {
             recent.addLast(eventJson);
             if (recent.size() > MAX_RECENT) recent.removeFirst();
+        }
+        for (Listener l : listeners) {
+            try { l.onEvent(eventJson); } catch (Throwable ignored) {}
         }
         byte[] payload = (eventJson + "\n").getBytes(UTF8);
         for (OutputStream os : clients) {

@@ -1,0 +1,143 @@
+name: release
+
+# Phone-first deliverable: signed Dota2.apk + two plain runtime ZIPs published
+# as clickable GitHub Release assets (no Artifacts, no PC, no unzipping).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'scripts/**'
+      - 'runtime/**'
+      - 'android/**'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DOTA2_KEYSTORE: /tmp/dota2-mobile.jks
+      DOTA2_KEYSTORE_PASS: dota2mobile
+      DOTA2_KEY_ALIAS: dota2
+      DOTA2_KEY_PASS: dota2mobile
+      RELEASE_BASE: https://github.com/ronansonir-a11y/Bhgjb/releases/download/mobile/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK / NDK / CMake
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+        run: |
+          SM="$(ls "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | sort -V | tail -1)"
+          [ -z "$SM" ] && SM="$(command -v sdkmanager)"
+          yes | "$SM" --licenses >/dev/null 2>&1 || true
+          "$SM" --install "platforms;android-34" "build-tools;34.0.0" \
+                          "platform-tools" "ndk;26.3.11579264" "cmake;3.22.1" 2>&1 | tail -6
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+
+      - name: Tools for repacking runtime (7z / zstd / zip)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq p7zip-full zstd zip >/dev/null
+
+      - name: Pack third-party runtime into two plain ZIPs
+        id: pack
+        continue-on-error: true
+        run: |
+          bash scripts/pack_runtime.sh dist
+          ls -lh dist/
+
+      - name: Guarantee release files exist (offline-safe)
+        run: |
+          mkdir -p dist
+          for f in dota2-runtime-core.zip dota2-goldberg.zip; do
+            if [ ! -s "dist/$f" ]; then
+              echo "Runtime packaging was unavailable in this build. Try 'Скачать рантайм' later." > dist/README.txt
+              ( cd dist && zip -q "$f" README.txt )
+            fi
+          done
+          if [ ! -s dist/dota2-runtime-manifest.json ]; then
+            python3 scripts/fallback_manifest.py dist
+          fi
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Generate Gradle wrapper
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.9 --distribution-type bin
+
+      - name: Restore stable signing key
+        id: keycache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/dota2-mobile.jks
+          key: dota2-signing-key-v1
+
+      - name: Create signing key (first run only)
+        if: steps.keycache.outputs.cache-hit != 'true'
+        run: |
+          keytool -genkeypair -v -keystore "$DOTA2_KEYSTORE" \
+            -alias "$DOTA2_KEY_ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$DOTA2_KEYSTORE_PASS" -keypass "$DOTA2_KEY_PASS" \
+            -dname "CN=Bhgjb Dota2 Mobile, OU=Research, O=Bhgjb, L=NA, S=NA, C=DE"
+
+      - name: Regenerate touch profiles
+        run: |
+          python3 -m pip install --quiet -r tools/requirements.txt
+          python3 tools/gen_touch_profile.py --out android/app/src/main/assets/dota2
+
+      - name: Build signed release APK
+        working-directory: android
+        run: |
+          set -o pipefail
+          ./gradlew assembleRelease -PwithNdk --stacktrace --no-daemon 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Verify signature and collect deliverable
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Dota2.apk
+          "$ANDROID_HOME"/build-tools/34.0.0/apksigner verify --print-certs Dota2.apk | head -8
+          ls -lh Dota2.apk
+
+      - name: Surface Gradle failure as annotations
+        if: failure()
+        run: |
+          if [ -f android/build.log ]; then
+            { grep -A16 'What went wrong' android/build.log | head -18;
+              grep -E '^e: |error:|FAILED|Lint found|Execution failed' android/build.log | head -8;
+            } | while IFS= read -r l; do echo "::error::${l:0:400}"; done
+          fi
+
+      - name: Upload Gradle log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gradle-log
+          path: android/build.log
+          if-no-files-found: warn
+
+      - name: Publish clickable Release assets
+        run: |
+          set -euo pipefail
+          if ! gh release view mobile >/dev/null 2>&1; then
+            gh release create mobile --title "Dota 2 Mobile — APK + runtime" \
+              --notes-file docs/RELEASE-NOTES.md
+          fi
+          gh release upload mobile Dota2.apk \
+            dist/dota2-runtime-core.zip dist/dota2-goldberg.zip \
+            dist/dota2-runtime-manifest.json --clobber
+          echo "### Release updated" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${{ github.repository }}/releases/tag/mobile" >> "$GITHUB_STEP_SUMMARY"
