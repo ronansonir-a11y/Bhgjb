@@ -57,6 +57,16 @@ assets/dota2/runtime-sources.json → dota2-runtime-manifest.json (SHA-256 + р�
 `runtime/sources.json` (Winlator 11.2.0, Goldberg `release-2026_09_27`, Box64,
 Turnip, Vortek) и все — открытые компоненты под LGPL/MIT.
 
+### Ограничение упаковки (честно)
+
+`zip` в CI не сохраняет симлинки, а `ZipInputStream` на телефоне не умеет их
+воссоздавать. В Wine/glibc rootfs симлинки есть (`/lib64`, `/usr/lib64`, …),
+поэтому распакованный рантайм **может потребовать постобработки** (создание
+symlink'ов по манифесту) перед тем, как `wine64` стартует. Это часть M3/M4:
+код загрузки и распаковки работает, но «полностью рабочий rootfs» не
+гарантируется без проверки на устройстве. Лог `bootstrap.sh` явно покажет,
+какого бинарника не хватает.
+
 ## 3. Реальный запуск контейнера
 
 `ContainerSession.start()` → `assets/dota2/bootstrap.sh`:

@@ -12,7 +12,7 @@
 |---|---|
 | **Путь А** — статическая рекомпиляция PE32+ → C++/LLVM IR → ARM64 | ❌ Не реализуемо для этого билда: JIT V8, 94 динамических DLL, MSVC x64 SEH/C++ EH, ~625 МиБ кода, нет PDB, нужен HLE объёмом с Wine. Разбор: [`docs/02`](docs/02-PATH-A-STATIC-RECOMPILATION.md) |
 | **Путь Б** — Wine + Box64/FEX + Vulkan-танк + Goldberg | ⚠️ Единственный реалистичный путь; в репозитории собран **установливаемый APK-каркас** и CI, но «играбельный матч с ботами» — цель M5–M6 с проверкой на устройстве. Разбор: [`docs/03`](docs/03-PATH-B-CONTAINER.md) |
-| **Что загрузить** | Один ZIP: `game/bin/win64/**` (93 PE) + `game/dota/bin/win64/**` (3 PE) = 96 файлов / 624.73 МиБ. Точный список и способ передачи: [`docs/04`](docs/04-FILE-MANIFEST.md) |
+| **Что загрузить** | 📱 **Ничего с ПК.** Готовый APK + 2 runtime-ZIP уже в [Release `mobile`](https://github.com/ronansonir-a11y/Bhgjb/releases/tag/mobile); приложение скачивает их само. Точный список 96 PE для анализа — [`docs/04`](docs/04-FILE-MANIFEST.md) |
 
 **Начните здесь:** [`docs/00-EXECUTIVE-SUMMARY.md`](docs/00-EXECUTIVE-SUMMARY.md) — три прямых ответа на ваши три вопроса.
 
