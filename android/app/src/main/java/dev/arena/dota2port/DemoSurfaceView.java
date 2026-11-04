@@ -153,7 +153,7 @@ public class DemoSurfaceView extends SurfaceView implements SurfaceHolder.Callba
             Canvas c = null;
             try {
                 c = getHolder().lockCanvas();
-                if (c != null) synchronized (getHolder()) { draw(c); }
+                if (c != null) synchronized (getHolder()) { render(c); }
             } catch (Throwable t) {
                 Log.w(TAG, "render", t);
             } finally {
@@ -163,7 +163,7 @@ public class DemoSurfaceView extends SurfaceView implements SurfaceHolder.Callba
         }
     }
 
-    private void draw(Canvas c) {
+    private void render(Canvas c) {
         if (w <= 0 || h <= 0) { w = getWidth(); h = getHeight(); }
         c.drawColor(0xFF0E1116);
         bg.setColor(0xFF0E1116);
