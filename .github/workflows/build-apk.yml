@@ -88,6 +88,16 @@ jobs:
           fi
           exit ${PIPESTATUS[0]}
 
+      - name: Surface Gradle failure as annotations
+        if: failure()
+        run: |
+          if [ -f android/build.log ]; then
+            grep -E 'FAILURE:|What went wrong|^> |Caused by:|error:|Execution failed|Could not|not found|Exception' \
+              android/build.log | tail -40 | while IFS= read -r l; do
+                echo "::error::${l:0:300}"
+              done
+          fi
+
       - name: Upload Gradle log on failure
         if: failure()
         uses: actions/upload-artifact@v4
