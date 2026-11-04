@@ -109,14 +109,14 @@ public final class RuntimeInstaller {
             File part = new File(downloads, a.name + ".part");
             File zip = new File(downloads, a.name);
             if (!zip.exists() || a.bytes > 0 && zip.length() != a.bytes) {
-                long[] counter = {0};
+                final long doneBefore = done;
+                final long totalFinal = total;
                 cb.onStage("Загрузка: " + a.name, pct(done, total), "0 / " + human(a.bytes));
                 download(a.url, part, cancel, (n, len) -> {
-                    long cur = done + n;
-                    long tot = total > 0 ? total : Math.max(len, 1);
+                    long cur = doneBefore + n;
+                    long tot = totalFinal > 0 ? totalFinal : Math.max(len, 1);
                     cb.onStage("Загрузка: " + a.name, (int) (cur * 100 / tot),
                             human(n) + " / " + human(len > 0 ? len : a.bytes));
-                    counter[0] = n;
                 });
                 if (cancel.get()) { part.delete(); cb.onDone(false, "Отменено"); return; }
                 if (zip.exists() && !zip.delete()) Log.w(TAG, "cannot remove old zip");
