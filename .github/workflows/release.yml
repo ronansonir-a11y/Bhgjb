@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 90
     env:
       GH_TOKEN: ${{ github.token }}
-      DOTA2_KEYSTORE: ${{ runner.temp }}/dota2.jks
+      DOTA2_KEYSTORE: /tmp/dota2-mobile.jks
       DOTA2_KEYSTORE_PASS: dota2mobile
       DOTA2_KEY_ALIAS: dota2
       DOTA2_KEY_PASS: dota2mobile
@@ -83,7 +83,7 @@ jobs:
         id: keycache
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}/dota2.jks
+          path: /tmp/dota2-mobile.jks
           key: dota2-signing-key-v1
 
       - name: Create signing key (first run only)
