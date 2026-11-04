@@ -88,11 +88,12 @@ public class DemoSurfaceView extends SurfaceView implements SurfaceHolder.Callba
         }
     }
 
-    @Override public void surfaceCreated(SurfaceHolder h) { if (!running) start(); }
-    @Override public void surfaceChanged(SurfaceHolder h, int f, int width, int height) {
-        w = width; h = height;
+    @Override public void surfaceCreated(SurfaceHolder holder) { if (!running) start(); }
+    @Override public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        w = width;
+        h = height;
     }
-    @Override public void surfaceDestroyed(SurfaceHolder h) { stop(); }
+    @Override public void surfaceDestroyed(SurfaceHolder holder) { stop(); }
 
     @Override public void onEvent(String json) {
         events++;

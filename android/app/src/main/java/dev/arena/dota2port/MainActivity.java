@@ -12,7 +12,7 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
-import android.view.FrameLayout;
+import android.widget.FrameLayout;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
